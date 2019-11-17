@@ -167,9 +167,6 @@ namespace MariSocketClient.Clients
                 .Try(this)
                 .ConfigureAwait(false);
 
-            if (!_config.AutoReconnect)
-                return;
-
             await ReconnectAsync()
                 .Try(this)
                 .ConfigureAwait(false);
@@ -264,6 +261,7 @@ namespace MariSocketClient.Clients
             }
 
             ReconnectInterval.Add(_config.ReconnectInterval);
+            ReconnectAttempts++;
 
             await _onRetry.InvokeAsync(new RetryEventArgs(ReconnectAttempts, ReconnectInterval))
                 .Try(this)
