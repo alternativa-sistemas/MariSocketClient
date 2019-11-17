@@ -3,12 +3,12 @@ using MariGlobals.Class.Utils;
 using MariSocketClient.Entities;
 using MariSocketClient.Entities.MariEventArgs;
 using MariSocketClient.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -140,7 +140,7 @@ namespace MariSocketClient.Clients
         }
 
         public Task SendAsync(object obj)
-            => SendAsync(JsonSerializer.Serialize(obj));
+            => SendAsync(JsonConvert.SerializeObject(obj));
 
         public async Task SendAsync(string message)
         {
