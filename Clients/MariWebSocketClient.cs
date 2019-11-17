@@ -117,9 +117,6 @@ namespace MariSocketClient.Clients
                 if (ex is TaskCanceledException)
                     return;
 
-                await _onError.InvokeAsync(new ErrorEventArgs(ex))
-                    .ConfigureAwait(false);
-
                 await _onDisconnected.InvokeAsync(
                     new DisconnectedEventArgs(WebSocketCloseStatus.ProtocolError, ex.ToString()))
                     .Try(this)
