@@ -87,7 +87,7 @@ namespace MariSocketClient.Clients
 
         private readonly AsyncEvent<RetryEventArgs> _onRetry;
 
-        public async Task ConnectAsync(CancellationToken token = default)
+        public async Task ConnectAsync(bool blockUntilDispose = false, CancellationToken token = default)
         {
             if (token.HasNoContent())
                 token = _ctsConnect.Token;
@@ -101,34 +101,78 @@ namespace MariSocketClient.Clients
                     .Try(this, true)
                     .ConfigureAwait(false);
 
-                await _onConnected.InvokeAsync()
-                    .Try(this)
-                    .ConfigureAwait(false);
+                if (blockUntilDispose)
+                {
+                    await _onConnected.InvokeAsync()
+                        .Try(this)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        await _onConnected.InvokeAsync()
+                        .Try(this)
+                        .ConfigureAwait(false);
+                    });
+                }
 
                 ReconnectAttempts = 0;
                 ReconnectInterval = TimeSpan.FromSeconds(0);
 
-                await ReceiveAsync()
-                    .Try(this, true)
-                    .ConfigureAwait(false);
+                if (blockUntilDispose)
+                {
+                    await ReceiveAsync()
+                        .Try(this, true)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        await NewReceiveAsync()
+                        .ConfigureAwait(false);
+                    });
+                }
             }
             catch (Exception ex)
             {
-                if (ex is TaskCanceledException)
-                    return;
-
-                await _onDisconnected.InvokeAsync(
-                    new DisconnectedEventArgs(WebSocketCloseStatus.ProtocolError, ex.ToString()))
-                    .Try(this)
-                    .ConfigureAwait(false);
-
-                if (!_config.AutoReconnect)
-                    return;
-
-                await ReconnectAsync()
-                    .Try(this)
+                await HandleExAsync(ex)
                     .ConfigureAwait(false);
             }
+        }
+
+        private async Task NewReceiveAsync()
+        {
+            try
+            {
+                await ReceiveAsync()
+                            .Try(this, true)
+                            .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await HandleExAsync(ex)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        private async Task HandleExAsync(Exception ex)
+        {
+            if (ex is TaskCanceledException)
+                return;
+
+            await _onDisconnected.InvokeAsync(
+                new DisconnectedEventArgs(WebSocketCloseStatus.ProtocolError, ex.ToString()))
+                .Try(this)
+                .ConfigureAwait(false);
+
+            if (!_config.AutoReconnect)
+                return;
+
+            await ReconnectAsync()
+                .Try(this)
+                .ConfigureAwait(false);
         }
 
         public async Task DisconnectAsync()
@@ -233,7 +277,7 @@ namespace MariSocketClient.Clients
                 Convert.ToInt32(_config.ConnectionTimeOut.TotalMilliseconds))
                 )
             {
-                await ConnectAsync(ctsSource.Token)
+                await ConnectAsync(true, ctsSource.Token)
                     .Try(this)
                     .ConfigureAwait(false);
             }
