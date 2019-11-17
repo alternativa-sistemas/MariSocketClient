@@ -122,6 +122,9 @@ namespace MariSocketClient.Clients
                     .Try(this)
                     .ConfigureAwait(false);
 
+                if (!_config.AutoReconnect)
+                    return;
+
                 await ReconnectAsync()
                     .Try(this)
                     .ConfigureAwait(false);
