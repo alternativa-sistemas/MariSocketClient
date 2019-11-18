@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace MariSocketClient.Clients
 {
+    // Based and Special Thanks for Socks https://github.com/Yucked/Socks
     public class MariWebSocketClient : IDisposable
     {
         private readonly CancellationTokenSource _ctsConnect;
@@ -205,7 +206,7 @@ namespace MariSocketClient.Clients
                 var result = await _socketClient.ReceiveAsync(bytes, _ctsMain.Token)
                         .ConfigureAwait(false);
 
-                await ReadMessageAsync(result, bytes);
+                await ReadMessageAsync(result, bytes).ConfigureAwait(false);
             }
         }
 
