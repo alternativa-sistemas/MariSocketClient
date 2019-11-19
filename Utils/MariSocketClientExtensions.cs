@@ -1,4 +1,5 @@
-﻿using MariSocketClient.Clients;
+﻿using MariGlobals.Class.Utils;
+using MariSocketClient.Clients;
 using MariSocketClient.Entities.MariEventArgs;
 using System;
 using System.Collections.Generic;
@@ -12,35 +13,17 @@ namespace MariSocketClient.Utils
         internal static async Task Try
             (this Task task, MariWebSocketClient socket, bool cancel = false)
         {
-            try
-            {
-                await task
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                await HandleExceptionFromTryAsync(ex, socket, cancel)
-                    .ConfigureAwait(false);
-            }
+            await task
+                .TryAsync((ex) => HandleExceptionFromTryAsync(ex, socket, cancel))
+                .ConfigureAwait(false);
         }
 
         internal static async Task<TResult> Try<TResult>
             (this Task<TResult> task, MariWebSocketClient socket, bool cancel = false)
         {
-            try
-            {
-                var memResult =
-                    new ReadOnlyMemory<TResult>(new TResult[] { await task.ConfigureAwait(false) });
-
-                return memResult.Span[0];
-            }
-            catch (Exception ex)
-            {
-                await HandleExceptionFromTryAsync(ex, socket, cancel)
-                    .ConfigureAwait(false);
-            }
-
-            return default;
+            return await task
+                .TryAsync((ex) => HandleExceptionFromTryAsync(ex, socket, cancel))
+                .ConfigureAwait(false);
         }
 
         private static async Task HandleExceptionFromTryAsync
