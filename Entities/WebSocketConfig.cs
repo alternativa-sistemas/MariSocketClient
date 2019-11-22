@@ -28,19 +28,19 @@ namespace MariSocketClient.Entities
             if (Url.HasNoContent())
                 throw new ArgumentNullException(nameof(Url));
 
-            if (BufferSize.HasNoContent())
+            if (BufferSize.HasNoContent() || BufferSize <= 0)
                 BufferSize = 512;
 
             if (AutoReconnect.HasNoContent())
                 AutoReconnect = false;
 
-            if (ReconnectInterval.HasNoContent())
+            if (ReconnectInterval.HasNoContent() || ReconnectInterval.Equals(TimeSpan.FromSeconds(0)))
                 ReconnectInterval = TimeSpan.FromSeconds(10);
 
-            if (MaxReconnectAttempts.HasNoContent())
+            if (MaxReconnectAttempts.HasNoContent() || MaxReconnectAttempts == 0)
                 MaxReconnectAttempts = -1;
 
-            if (ConnectionTimeOut.HasNoContent())
+            if (ConnectionTimeOut.HasNoContent() || ConnectionTimeOut.Equals(TimeSpan.FromSeconds(0)))
                 ConnectionTimeOut = TimeSpan.FromSeconds(30);
 
             return this;

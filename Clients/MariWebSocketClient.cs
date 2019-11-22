@@ -28,6 +28,8 @@ namespace MariSocketClient.Clients
         public TimeSpan ReconnectInterval { get; private set; } = TimeSpan.FromSeconds(0);
         public long ReconnectAttempts { get; private set; } = 0;
 
+        private bool AlreadyStared { get; set; } = false;
+
         public MariWebSocketClient(WebSocketConfig config)
         {
             _ctsConnect = new CancellationTokenSource();
@@ -90,17 +92,18 @@ namespace MariSocketClient.Clients
 
         public async Task ConnectAsync(bool blockUntilDispose = false, CancellationToken token = default)
         {
-            if (token.HasNoContent())
+            if (token.HasNoContent() || !token.CanBeCanceled)
                 token = _ctsConnect.Token;
 
-            foreach (var header in _headers)
-                _socketClient.Options.SetRequestHeader(header.Key, header.Value);
+            AddHeaders();
 
             try
             {
                 await _socketClient.ConnectAsync(_config.Url.ToUri(), token)
                     .Try(this, true)
                     .ConfigureAwait(false);
+
+                IsConnected = true;
 
                 if (blockUntilDispose)
                 {
@@ -164,9 +167,11 @@ namespace MariSocketClient.Clients
                 return;
 
             await _onDisconnected.InvokeAsync(
-                new DisconnectedEventArgs(WebSocketCloseStatus.ProtocolError, ex.ToString()))
+                new DisconnectedEventArgs(WebSocketCloseStatus.ProtocolError, ex.Message))
                 .Try(this)
                 .ConfigureAwait(false);
+
+            IsConnected = false;
 
             await ReconnectAsync()
                 .Try(this)
@@ -182,6 +187,8 @@ namespace MariSocketClient.Clients
                 "Close requested by client.", _ctsMain.Token)
                 .Try(this)
                 .ConfigureAwait(false);
+
+            IsConnected = false;
         }
 
         public Task SendAsync(object obj)
@@ -215,8 +222,6 @@ namespace MariSocketClient.Clients
             if (!result.EndOfMessage)
                 return;
 
-            Array.Resize(ref buffer, Array.FindLastIndex(buffer, a => a != 0) + 1);
-
             if (result.MessageType.Equals(WebSocketMessageType.Text))
             {
                 await _onMessage.InvokeAsync(new MessageEventArgs(Encoding.UTF8.GetString(buffer)))
@@ -230,9 +235,11 @@ namespace MariSocketClient.Clients
 
                 if (!_config.AutoReconnect)
                 {
-                    await _socketClient.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                        "Closed by remote", _ctsMain.Token)
-                        .ConfigureAwait(false);
+                    if (_socketClient.State.Equals(WebSocketState.Open))
+                        await _socketClient.CloseAsync(WebSocketCloseStatus.NormalClosure,
+                            "Closed by remote", _ctsMain.Token)
+                            .ConfigureAwait(false);
+
                     return;
                 }
                 else
@@ -280,6 +287,17 @@ namespace MariSocketClient.Clients
                     .Try(this)
                     .ConfigureAwait(false);
             }
+        }
+
+        public void AddHeaders()
+        {
+            if (AlreadyStared)
+                return;
+
+            AlreadyStared = true;
+
+            foreach (var header in _headers)
+                _socketClient.Options.SetRequestHeader(header.Key, header.Value);
         }
 
         public void Dispose()
