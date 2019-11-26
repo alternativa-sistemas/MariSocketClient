@@ -1,8 +1,5 @@
-﻿using MariGlobals.Class.Utils;
+﻿using MariGlobals.Utils;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 
 namespace MariSocketClient.Entities
 {

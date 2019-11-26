@@ -1,5 +1,5 @@
-﻿using MariGlobals.Class.Event;
-using MariGlobals.Class.Utils;
+﻿using MariGlobals.Event.Concrete;
+using MariGlobals.Utils;
 using MariSocketClient.Entities;
 using MariSocketClient.Entities.MariEventArgs;
 using MariSocketClient.Utils;

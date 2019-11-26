@@ -1,9 +1,7 @@
-﻿using MariGlobals.Class.Utils;
+﻿using MariGlobals.Utils;
 using MariSocketClient.Clients;
 using MariSocketClient.Entities.MariEventArgs;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MariSocketClient.Utils
