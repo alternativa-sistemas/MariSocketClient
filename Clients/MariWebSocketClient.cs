@@ -289,7 +289,7 @@ namespace MariSocketClient.Clients
             }
         }
 
-        public void AddHeaders()
+        private void AddHeaders()
         {
             if (AlreadyStared)
                 return;
