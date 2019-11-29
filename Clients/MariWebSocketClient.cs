@@ -255,7 +255,7 @@ namespace MariSocketClient.Clients
             if (!_config.AutoReconnect)
                 return;
 
-            if (ReconnectAttempts > _config.MaxReconnectAttempts)
+            if (ReconnectAttempts > _config.MaxReconnectAttempts && _config.MaxReconnectAttempts >= 0)
                 return;
 
             if (ReconnectAttempts == _config.MaxReconnectAttempts)
