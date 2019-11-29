@@ -278,15 +278,12 @@ namespace MariSocketClient.Clients
             await Task.Delay(ReconnectInterval)
                 .ConfigureAwait(false);
 
-            using (
-                var ctsSource = new CancellationTokenSource(
-                Convert.ToInt32(_config.ConnectionTimeOut.TotalMilliseconds))
-                )
-            {
-                await ConnectAsync(true, ctsSource.Token)
-                    .Try(this)
-                    .ConfigureAwait(false);
-            }
+            using var ctsSource
+                = new CancellationTokenSource(Convert.ToInt32(_config.ConnectionTimeOut.TotalMilliseconds));
+
+            await ConnectAsync(true, ctsSource.Token)
+               .Try(this)
+               .ConfigureAwait(false);
         }
 
         private void AddHeaders()
