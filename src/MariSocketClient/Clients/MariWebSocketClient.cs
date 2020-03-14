@@ -21,21 +21,20 @@ namespace MariSocketClient.Clients
         private readonly CancellationTokenSource _ctsMain;
         private readonly WebSocketConfig _config;
         private readonly ConcurrentDictionary<string, string> _headers;
-        private readonly ClientWebSocket _socketClient;
+        private ClientWebSocket _socketClient;
 
         public bool IsDisposed { get; private set; } = false;
         public bool IsConnected { get; private set; } = false;
         public TimeSpan ReconnectInterval { get; private set; } = TimeSpan.FromSeconds(0);
         public long ReconnectAttempts { get; private set; } = 0;
 
-        private bool AlreadyStared { get; set; } = false;
+        private bool AlreadyStarted { get; set; } = false;
 
         public MariWebSocketClient(WebSocketConfig config)
         {
             _ctsConnect = new CancellationTokenSource();
             _ctsMain = new CancellationTokenSource();
             _headers = new ConcurrentDictionary<string, string>();
-            _socketClient = new ClientWebSocket();
 
             ServicePointManager
                 .ServerCertificateValidationCallback += (_, __, ___, ____)
@@ -92,9 +91,15 @@ namespace MariSocketClient.Clients
 
         public async Task ConnectAsync(bool blockUntilDispose = false, CancellationToken token = default)
         {
+            if (IsConnected)
+                return;
+
             if (token.HasNoContent() || !token.CanBeCanceled)
                 token = _ctsConnect.Token;
 
+            _socketClient = new ClientWebSocket();
+
+            AlreadyStarted = false;
             AddHeaders();
 
             try
@@ -268,7 +273,7 @@ namespace MariSocketClient.Clients
                 return;
             }
 
-            ReconnectInterval.Add(_config.ReconnectInterval);
+            ReconnectInterval = ReconnectInterval.Add(_config.ReconnectInterval);
             ReconnectAttempts++;
 
             await _onRetry.InvokeAsync(new RetryEventArgs(ReconnectAttempts, ReconnectInterval))
@@ -288,10 +293,10 @@ namespace MariSocketClient.Clients
 
         private void AddHeaders()
         {
-            if (AlreadyStared)
+            if (AlreadyStarted)
                 return;
 
-            AlreadyStared = true;
+            AlreadyStarted = true;
 
             foreach (var header in _headers)
                 _socketClient.Options.SetRequestHeader(header.Key, header.Value);
