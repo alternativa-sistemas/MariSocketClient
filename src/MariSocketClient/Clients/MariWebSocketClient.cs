@@ -28,7 +28,7 @@ namespace MariSocketClient.Clients
         public TimeSpan ReconnectInterval { get; private set; } = TimeSpan.FromSeconds(0);
         public long ReconnectAttempts { get; private set; } = 0;
 
-        private bool AlreadyStared { get; set; } = false;
+        private bool AlreadyStarted { get; set; } = false;
 
         public MariWebSocketClient(WebSocketConfig config)
         {
@@ -98,7 +98,8 @@ namespace MariSocketClient.Clients
                 token = _ctsConnect.Token;
 
             _socketClient = new ClientWebSocket();
-            AlreadyStared = false;
+
+            AlreadyStarted = false;
             AddHeaders();
 
             try
@@ -293,10 +294,10 @@ namespace MariSocketClient.Clients
 
         private void AddHeaders()
         {
-            if (AlreadyStared)
+            if (AlreadyStarted)
                 return;
 
-            AlreadyStared = true;
+            AlreadyStarted = true;
 
             foreach (var header in _headers)
                 _socketClient.Options.SetRequestHeader(header.Key, header.Value);
