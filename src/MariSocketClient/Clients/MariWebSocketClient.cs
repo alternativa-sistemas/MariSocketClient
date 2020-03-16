@@ -21,7 +21,7 @@ namespace MariSocketClient.Clients
         private readonly CancellationTokenSource _ctsMain;
         private readonly WebSocketConfig _config;
         private readonly ConcurrentDictionary<string, string> _headers;
-        private readonly ClientWebSocket _socketClient;
+        private ClientWebSocket _socketClient;
 
         public bool IsDisposed { get; private set; } = false;
         public bool IsConnected { get; private set; } = false;
@@ -35,7 +35,6 @@ namespace MariSocketClient.Clients
             _ctsConnect = new CancellationTokenSource();
             _ctsMain = new CancellationTokenSource();
             _headers = new ConcurrentDictionary<string, string>();
-            _socketClient = new ClientWebSocket();
 
             ServicePointManager
                 .ServerCertificateValidationCallback += (_, __, ___, ____)
@@ -92,14 +91,20 @@ namespace MariSocketClient.Clients
 
         public async Task ConnectAsync(bool blockUntilDispose = false, CancellationToken token = default)
         {
+            if (IsConnected)
+                return;
+
             if (token.HasNoContent() || !token.CanBeCanceled)
                 token = _ctsConnect.Token;
 
+            _socketClient = new ClientWebSocket();
+            AlreadyStared = false;
             AddHeaders();
 
             try
             {
-                await _socketClient.ConnectAsync(_config.Url.ToUri(), token)
+                var uri = new Uri(_config.Url.Url);
+                await _socketClient.ConnectAsync(uri, token)
                     .Try(this, true)
                     .ConfigureAwait(false);
 
@@ -252,7 +257,7 @@ namespace MariSocketClient.Clients
 
         private async Task ReconnectAsync()
         {
-            if (!_config.AutoReconnect)
+            if (!_config.AutoReconnect || IsConnected)
                 return;
 
             if (ReconnectAttempts > _config.MaxReconnectAttempts && _config.MaxReconnectAttempts >= 0)
@@ -268,7 +273,7 @@ namespace MariSocketClient.Clients
                 return;
             }
 
-            ReconnectInterval.Add(_config.ReconnectInterval);
+            ReconnectInterval = ReconnectInterval.Add(_config.ReconnectInterval);
             ReconnectAttempts++;
 
             await _onRetry.InvokeAsync(new RetryEventArgs(ReconnectAttempts, ReconnectInterval))
@@ -310,7 +315,12 @@ namespace MariSocketClient.Clients
                 _ctsMain.Cancel(false);
             _ctsMain.Dispose();
 
-            _socketClient.Abort();
+            try
+            {
+                _socketClient.Abort();
+            }
+            catch { }
+
             _socketClient.Dispose();
 
             _headers.Clear();
