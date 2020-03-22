@@ -308,23 +308,23 @@ namespace MariSocketClient.Clients
             if (IsDisposed)
                 return;
 
-            if (!_ctsConnect.IsCancellationRequested)
-                _ctsConnect.Cancel(false);
-            _ctsConnect.Dispose();
+            if (!_ctsConnect?.IsCancellationRequested == true)
+                _ctsConnect?.Cancel(false);
+            _ctsConnect?.Dispose();
 
-            if (!_ctsMain.IsCancellationRequested)
-                _ctsMain.Cancel(false);
-            _ctsMain.Dispose();
+            if (!_ctsMain?.IsCancellationRequested == true)
+                _ctsMain?.Cancel(false);
+            _ctsMain?.Dispose();
 
             try
             {
-                _socketClient.Abort();
+                _socketClient?.Abort();
             }
             catch { }
 
-            _socketClient.Dispose();
+            _socketClient?.Dispose();
 
-            _headers.Clear();
+            _headers?.Clear();
         }
 
         public bool TryAddHeader(string key, string value)
