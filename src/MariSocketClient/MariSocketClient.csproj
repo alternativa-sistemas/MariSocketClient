@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PackageId>MariSocketClient</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>renanrcp</Authors>
     <Company>MariBot</Company>
     <Description>Mari websocket's client side implementation.</Description>
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MariGlobals" Version="1.0.0" />
+    <PackageReference Include="MariGlobals" Version="1.0.6" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
